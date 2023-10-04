@@ -6,7 +6,7 @@ import plotly.express as px
 
 
 # Load the data from the CSV file
-data = pd.read_csv("Data/ouchie.csv")
+data = pd.read_csv("Data/clean_field_of_study.csv")
 
 
 def get_sorted_data(df, sort_by_instnm=True, sort_by_cipdef=True):
