@@ -5,3 +5,5 @@ Data/CollegeScorecardDataDictionary.xlsx
 .log
 college_scorecard_exploration.pdf
 college_scorecard.html
+*.env
+*.idea

@@ -1,0 +1,65 @@
+---
+title: "College Scorecard Data Pull"
+author: "Sven Soderborg"
+output: html_document
+---
+
+```{r echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+library(rscorecard)
+library(dotenv)
+library(dplyr)
+
+# Set working directory
+setwd("C:/Users/svens/Documents/College_Outcomes")
+
+# Load API Key
+load_dot_env()
+sc_key(Sys.getenv("SC_KEY"))
+```
+
+## Pull data on Utah Schools
+SC_Variable | SC_Description
+------------- | -------------
+unitid | Unit ID for institution
+instnm | Name of institution
+control | 1==public, 2==private non-profit, 3==private for-profit
+cipcode | Classification of instructional program code
+cipfield | First two digits of cipcode - General field of study
+credlev | Level of credential
+ugds | Enrollment of undergraduate certificate/degree-seeking students
+earn_count_wne_4yr | Number of students in the 4-year cohort working and not enrolled
+earn_mdn_4yr | Average earnings of students in the 4-year
+earn_count_wne_1yr | Number of students in the 1-year cohort working and not enrolled
+earn_mdn_1yr | Average earnings of students in the 1-year cohort
+mdcost_all | Overall median for average price (tuition + fees + room and board + other expenses + books and supplies - federal, state/local government, or institutional grant - scholarship aid)
+booksupply | Estimated cost of books and supplies
+
+
+```{r message=FALSE, warning=FALSE}
+# Declare which vars we want from the Scorecard
+sc_vars <- c("unitid", "instnm", "control", "cipcode", "ugds",
+             "earn_count_wne_4yr", "earn_mdn_4yr",
+             "earn_count_wne_1yr", "earn_mdn_1yr",
+             "mdcost_all", "booksupply")
+
+# Request data and add useful columns
+ut_df <- sc_init() %>%
+  sc_filter(stabbr == c("UT"), preddeg == 3, control != 3, credlev == 3) %>%
+  sc_select_(sc_vars) %>%
+  sc_year("latest") %>%
+  sc_get() %>%
+  mutate(cipfield = substr(cipcode, 1, 2)) %>% # Create cipfield column
+  mutate(netprice = mdcost_all - booksupply) %>% # Create netcost column
+  select(-mdcost_all, -booksupply) %>% # Drop mdcost_all and booksupply 
+  filter(complete.cases(.)) # Drop rows with NA values
+
+
+# Display first few rows of data for UofU business majors
+u_bus <- ut_df %>%
+  filter(unitid == 230764 & cipfield == 52) %>%
+  select(instnm, cipcode,
+         earn_count_wne_4yr, earn_mdn_4yr,
+         earn_count_wne_1yr, earn_mdn_1yr,
+         netprice)
+knitr::kable(head(u_bus))
+```
